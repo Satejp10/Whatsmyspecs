@@ -43,14 +43,19 @@ export default function App() {
           const debugInfo = (gl as WebGLRenderingContext).getExtension('WEBGL_debug_renderer_info');
           if (debugInfo) {
             const rawGpu = (gl as WebGLRenderingContext).getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
-            // Smart extraction of the market name (handles ANGLE wrappers and driver suffixes)
-            const angleMatch = rawGpu.match(/ANGLE \([^,]+,\s*([^,]+?)(?:\s+Direct3D|\s+OpenGL|\s+Vulkan|,|\))/i);
+            
+            let cleanGpu = rawGpu;
+            // 1. Extract the hardware name from ANGLE strings
+            const angleMatch = cleanGpu.match(/ANGLE \([^,]+,\s*([^,]+)/i);
             if (angleMatch && angleMatch[1]) {
-              gpu = angleMatch[1].trim();
-            } else {
-              // Fallback cleanup for non-ANGLE strings
-              gpu = rawGpu.replace(/Direct3D.*/i, '').replace(/OpenGL.*/i, '').replace(/Vulkan.*/i, '').trim();
+              cleanGpu = angleMatch[1];
             }
+            // 2. Strip graphics API suffixes
+            cleanGpu = cleanGpu.replace(/\s+(Direct3D|OpenGL|Vulkan).*/i, '');
+            // 3. Strip PCI device IDs like (0x000028E0) or incomplete ones like (0x000028E0
+            cleanGpu = cleanGpu.replace(/\s*\(\s*0x[0-9a-fA-F]+\s*\)?/i, '');
+            // 4. Final cleanup
+            gpu = cleanGpu.replace(/[,)]$/, '').trim();
           }
         }
       } catch (e) {
