@@ -1,0 +1,5 @@
+{
+  "name": "What's My Battlestation?",
+  "description": "A browser-based hardware spec detector for PC gamers and tech enthusiasts.",
+  "requestFramePermissions": []
+}
