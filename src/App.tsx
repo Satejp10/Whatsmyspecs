@@ -74,13 +74,24 @@ export default function App() {
         : 'Unknown';
 
       // 4. OS Detection
-      let os = 'Unknown OS';
+      let os = 'Unidentified Platform';
       const ua = navigator.userAgent;
-      if (/Windows/i.test(ua)) os = 'Windows';
-      else if (/Mac/i.test(ua)) os = 'macOS';
-      else if (/Linux/i.test(ua)) os = 'Linux';
-      else if (/Android/i.test(ua)) os = 'Android';
-      else if (/iPhone|iPad|iPod/i.test(ua)) os = 'iOS';
+      
+      // Detect iOS (including modern iPads which report as Macintosh)
+      const isIOS = /iPhone|iPad|iPod/i.test(ua) || 
+                   (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      
+      if (isIOS) {
+        os = 'iOS';
+      } else if (/Android/i.test(ua)) {
+        os = 'Android';
+      } else if (/Windows/i.test(ua)) {
+        os = 'Windows';
+      } else if (/Mac/i.test(ua)) {
+        os = 'macOS';
+      } else if (/Linux/i.test(ua)) {
+        os = 'Linux';
+      }
 
       // 5. WebGPU Detection
       const hasWebGPU = 'gpu' in navigator;
