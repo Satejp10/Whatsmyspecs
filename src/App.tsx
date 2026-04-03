@@ -63,15 +63,26 @@ export default function App() {
       }
 
       // 2. CPU Cores Detection
-      const cpu = navigator.hardwareConcurrency 
-        ? `${navigator.hardwareConcurrency} Threads` 
-        : 'Unknown';
+      let cpu = 'Unknown';
+      if ('hardwareConcurrency' in navigator) {
+        cpu = `${navigator.hardwareConcurrency} Threads`;
+      } else {
+        cpu = 'Not available';
+      }
 
       // 3. RAM Detection
-      const nav = navigator as any;
-      const ram = nav.deviceMemory 
-        ? `≥ ${nav.deviceMemory} GB` 
-        : 'Unknown';
+      let ram = 'Unknown';
+      if ('deviceMemory' in navigator) {
+        const mem = (navigator as any).deviceMemory;
+        // In cross-origin iframes or strict privacy modes, this can report artificially low like 0.5
+        if (mem < 1) {
+          ram = 'Unknown (Restricted)';
+        } else {
+          ram = `≥ ${mem} GB`;
+        }
+      } else {
+        ram = 'Not available';
+      }
 
       // 4. OS Detection
       let os = 'Unidentified Platform';
