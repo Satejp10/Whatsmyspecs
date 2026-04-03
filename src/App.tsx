@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Monitor, Cpu, MemoryStick, MonitorSmartphone, Sun, Moon, Info, X, ExternalLink, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Monitor, Cpu, MemoryStick, MonitorSmartphone, Sun, Moon, Info, X, ExternalLink, CheckCircle2, AlertCircle, Edit2, Save } from 'lucide-react';
 
 interface Specs {
   gpu: string;
@@ -12,17 +12,12 @@ interface Specs {
 
 export default function App() {
   const [specs, setSpecs] = useState<Specs | null>(null);
-  const [isDarkMode, setIsDarkMode] = useState<boolean>(true);
+  const [customSpecs, setCustomSpecs] = useState<Specs | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editForm, setEditForm] = useState<Specs | null>(null);
+  
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-
-  useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    setIsDarkMode(mediaQuery.matches);
-
-    const handler = (e: MediaQueryListEvent) => setIsDarkMode(e.matches);
-    mediaQuery.addEventListener('change', handler);
-    return () => mediaQuery.removeEventListener('change', handler);
-  }, []);
 
   useEffect(() => {
     if (isDarkMode) {
@@ -119,6 +114,8 @@ export default function App() {
 
   const toggleTheme = () => setIsDarkMode(!isDarkMode);
 
+  const displaySpecs = customSpecs || specs;
+
   return (
     <div className="min-h-screen bg-[#fafafa] dark:bg-[#0a0a0a] text-neutral-900 dark:text-neutral-200 font-sans transition-colors duration-300 flex flex-col">
       {/* Top Nav */}
@@ -153,25 +150,54 @@ export default function App() {
 
         {/* Horizontal Spec Bar */}
         <div className="w-full">
-          {specs ? (
+          {!specs ? (
+            <div className="flex justify-center items-center py-12 border-y border-neutral-200 dark:border-neutral-800/60">
+              <div className="w-6 h-6 border-2 border-green-500 border-t-transparent rounded-full animate-spin"></div>
+            </div>
+          ) : isEditing && editForm ? (
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="flex flex-col md:flex-row flex-wrap justify-center items-center gap-x-6 gap-y-6 py-8 border-y border-neutral-200 dark:border-neutral-800/60"
+            >
+              <EditSpecItem icon={<Monitor />} label="GPU" value={editForm.gpu} onChange={(v) => setEditForm({...editForm, gpu: v})} />
+              <Divider />
+              <EditSpecItem icon={<MemoryStick />} label="RAM" value={editForm.ram} onChange={(v) => setEditForm({...editForm, ram: v})} />
+              <Divider />
+              <EditSpecItem icon={<Cpu />} label="CORES" value={editForm.cpu} onChange={(v) => setEditForm({...editForm, cpu: v})} />
+              <Divider />
+              <EditSpecItem icon={<MonitorSmartphone />} label="OS" value={editForm.os} onChange={(v) => setEditForm({...editForm, os: v})} />
+              
+              <div className="flex items-center gap-2 ml-0 md:ml-4 mt-4 md:mt-0">
+                <button 
+                  onClick={() => setIsEditing(false)} 
+                  className="px-4 py-2 text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 font-medium transition-colors"
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={() => { setCustomSpecs(editForm); setIsEditing(false); }} 
+                  className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md font-medium flex items-center gap-2 transition-colors shadow-lg shadow-green-600/20"
+                >
+                  <Save className="w-4 h-4" /> Save
+                </button>
+              </div>
+            </motion.div>
+          ) : (
             <motion.div 
               initial={{ opacity: 0, scale: 0.98 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.5, delay: 0.2 }}
               className="flex flex-col md:flex-row flex-wrap justify-center items-center gap-x-8 gap-y-8 py-8 border-y border-neutral-200 dark:border-neutral-800/60"
             >
-              <SpecItem icon={<Monitor />} label="GPU" value={specs.gpu} />
+              <SpecItem icon={<Monitor />} label="GPU" value={displaySpecs!.gpu} />
               <Divider />
-              <SpecItem icon={<MemoryStick />} label="RAM" value={specs.ram} hasAsterisk onAsteriskClick={() => setIsModalOpen(true)} />
+              <SpecItem icon={<MemoryStick />} label="RAM" value={displaySpecs!.ram} hasAsterisk={!customSpecs} onAsteriskClick={() => setIsModalOpen(true)} />
               <Divider />
-              <SpecItem icon={<Cpu />} label="CORES" value={specs.cpu} hasAsterisk onAsteriskClick={() => setIsModalOpen(true)} />
+              <SpecItem icon={<Cpu />} label="CORES" value={displaySpecs!.cpu} hasAsterisk={!customSpecs} onAsteriskClick={() => setIsModalOpen(true)} />
               <Divider />
-              <SpecItem icon={<MonitorSmartphone />} label="OS" value={specs.os} />
+              <SpecItem icon={<MonitorSmartphone />} label="OS" value={displaySpecs!.os} />
             </motion.div>
-          ) : (
-            <div className="flex justify-center items-center py-12 border-y border-neutral-200 dark:border-neutral-800/60">
-              <div className="w-6 h-6 border-2 border-green-500 border-t-transparent rounded-full animate-spin"></div>
-            </div>
           )}
         </div>
 
@@ -182,7 +208,27 @@ export default function App() {
           transition={{ duration: 0.5, delay: 0.6 }}
           className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3 text-xs sm:text-sm text-neutral-500 dark:text-neutral-500"
         >
-          <p>Estimates based on browser APIs. Actual specs may vary.</p>
+          {!isEditing && (
+            <div className="flex flex-col sm:flex-row items-center gap-3">
+              <p>{customSpecs ? 'Displaying custom manual specs.' : 'Estimates based on browser APIs. Actual specs may vary.'}</p>
+              <button 
+                onClick={() => { setEditForm(customSpecs || specs); setIsEditing(true); }} 
+                className="text-green-600 dark:text-green-500 hover:underline flex items-center gap-1 font-medium"
+              >
+                <Edit2 className="w-3.5 h-3.5" /> {customSpecs ? 'Edit Specs' : 'Enter Specs Manually'}
+              </button>
+              {customSpecs && (
+                <button 
+                  onClick={() => setCustomSpecs(null)} 
+                  className="text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 hover:underline flex items-center gap-1 font-medium sm:ml-2"
+                >
+                  <X className="w-3.5 h-3.5" /> Reset to Auto
+                </button>
+              )}
+              <div className="hidden sm:block w-px h-4 bg-neutral-300 dark:bg-neutral-800 mx-1"></div>
+            </div>
+          )}
+          
           {specs?.hasWebGPU ? (
             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-100 dark:bg-green-500/10 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-500/20 font-medium">
               <CheckCircle2 className="w-3.5 h-3.5" /> WebGPU
@@ -275,6 +321,23 @@ function SpecItem({ icon, label, value, hasAsterisk, onAsteriskClick }: { icon: 
           </button>
         )}
       </div>
+    </div>
+  );
+}
+
+function EditSpecItem({ icon, label, value, onChange }: { icon: React.ReactNode, label: string, value: string, onChange: (val: string) => void }) {
+  return (
+    <div className="flex items-center gap-3">
+      <div className="flex flex-col items-center justify-center text-neutral-400 dark:text-neutral-500 w-10">
+        {React.cloneElement(icon as React.ReactElement, { className: "w-6 h-6 mb-1" })}
+        <span className="text-[9px] uppercase tracking-widest font-bold">{label}</span>
+      </div>
+      <input 
+        type="text" 
+        value={value} 
+        onChange={(e) => onChange(e.target.value)}
+        className="font-mono text-neutral-800 dark:text-neutral-200 text-sm md:text-base bg-white dark:bg-[#111] border border-neutral-300 dark:border-neutral-800 rounded-md px-3 py-1.5 outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 w-32 md:w-40 transition-all"
+      />
     </div>
   );
 }
