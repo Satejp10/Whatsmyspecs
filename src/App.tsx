@@ -2,6 +2,82 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Monitor, Cpu, MemoryStick, MonitorSmartphone, Sun, Moon, Info, X, ExternalLink, CheckCircle2, AlertCircle, Edit2, Save } from 'lucide-react';
 
+const RAM_OPTIONS = ['4 GB', '8 GB', '12 GB', '16 GB', '24 GB', '32 GB', '64 GB', '128 GB'];
+const CPU_OPTIONS = [
+  {
+    group: 'Core Count',
+    items: ['2 Cores', '4 Cores', '6 Cores', '8 Cores', '10 Cores', '12 Cores', '14 Cores', '16 Cores', '20 Cores', '24 Cores', '32 Cores', '64 Cores']
+  },
+  {
+    group: 'Intel Core',
+    items: ['Core Ultra 9', 'Core Ultra 7', 'Core Ultra 5', 'Core i9 (14th Gen)', 'Core i7 (14th Gen)', 'Core i5 (14th Gen)', 'Core i9 (13th Gen)', 'Core i7 (13th Gen)', 'Core i5 (13th Gen)', 'Core i9 (12th Gen)', 'Core i7 (12th Gen)', 'Core i5 (12th Gen)', 'Core i9 (11th/10th Gen)', 'Core i7 (11th/10th Gen)', 'Core i5 (11th/10th Gen)', 'Core i3']
+  },
+  {
+    group: 'AMD Ryzen',
+    items: ['Ryzen 9 (9000 Series)', 'Ryzen 7 (9000 Series)', 'Ryzen 5 (9000 Series)', 'Ryzen 9 (8000 Series)', 'Ryzen 7 (8000 Series)', 'Ryzen 5 (8000 Series)', 'Ryzen 9 (7000 Series)', 'Ryzen 7 (7000 Series)', 'Ryzen 5 (7000 Series)', 'Ryzen 9 (5000 Series)', 'Ryzen 7 (5000 Series)', 'Ryzen 5 (5000 Series)', 'Ryzen 7 (3000 Series)', 'Ryzen 5 (3000 Series)', 'Ryzen 3']
+  },
+  {
+    group: 'Apple Silicon',
+    items: ['M4 Series', 'M3 Series', 'M2 Series', 'M1 Series']
+  },
+  {
+    group: 'Other',
+    items: ['Other / Unknown CPU']
+  }
+];
+const OS_OPTIONS = ['Windows 11/10', 'Windows 7', 'macOS', 'Linux', 'ChromeOS'];
+
+const GPU_OPTIONS = [
+  {
+    group: 'NVIDIA RTX 50 Series',
+    items: ['5090 RTX', '5080 RTX', '5070 Ti RTX', '5070 RTX', '5060 Ti RTX', '5060 RTX', '5090 Laptop RTX', '5080 Laptop RTX', '5070 Laptop RTX', '5060 Laptop RTX']
+  },
+  {
+    group: 'NVIDIA RTX 40 Series',
+    items: ['4090 RTX', '4080 RTX', '4070 Ti RTX', '4070 RTX', '4060 Ti RTX', '4060 RTX', '4090 Laptop RTX', '4080 Laptop RTX', '4070 Laptop RTX', '4060 Laptop RTX', '4050 Laptop RTX']
+  },
+  {
+    group: 'NVIDIA RTX 30 Series',
+    items: ['3090 Ti RTX', '3090 RTX', '3080 Ti RTX', '3080 RTX', '3070 Ti RTX', '3070 RTX', '3060 Ti RTX', '3060 RTX', '3050 RTX']
+  },
+  {
+    group: 'NVIDIA RTX 20 Series',
+    items: ['2080 Ti RTX', '2080 Super RTX', '2080 RTX', '2070 Super RTX', '2070 RTX', '2060 Super RTX', '2060 RTX', '2080 Super Max-Q RTX', '2080 Max-Q RTX', '2070 Max-Q RTX', '2060 Max-Q RTX']
+  },
+  {
+    group: 'NVIDIA GTX Series',
+    items: ['1660 Ti GTX', '1660 Super GTX', '1660 GTX', '1650 GTX', '1080 Ti GTX', '1080 GTX', '1070 GTX', '1060 GTX']
+  },
+  {
+    group: 'AMD Radeon RX 9000 Series',
+    items: ['9900 XTX RX', '9900 XT RX', '9800 XT RX', '9700 XT RX', '9600 XT RX', '9600 RX']
+  },
+  {
+    group: 'AMD Radeon RX 8000 Series',
+    items: ['8900 XTX RX', '8900 XT RX', '8800 XT RX', '8700 XT RX', '8600 XT RX', '8600 RX']
+  },
+  {
+    group: 'AMD Radeon RX 7000 Series',
+    items: ['7900 XTX RX', '7900 XT RX', '7900 GRE RX', '7800 XT RX', '7700 XT RX', '7600 XT RX', '7600 RX']
+  },
+  {
+    group: 'AMD Radeon RX 6000 Series',
+    items: ['6950 XT RX', '6900 XT RX', '6800 XT RX', '6800 RX', '6750 XT RX', '6700 XT RX', '6650 XT RX', '6600 XT RX', '6600 RX', '6500 XT RX']
+  },
+  {
+    group: 'Intel',
+    items: ['A770 Arc', 'A750 Arc', 'A580 Arc', 'Iris Xe Graphics', 'UHD Graphics']
+  },
+  {
+    group: 'Apple Silicon',
+    items: ['M4 Max', 'M4 Pro', 'M4', 'M3 Max', 'M3 Pro', 'M3', 'M2 Ultra', 'M2 Max', 'M2 Pro', 'M2', 'M1 Ultra', 'M1 Max', 'M1 Pro', 'M1']
+  },
+  {
+    group: 'Other',
+    items: ['Other / Unknown GPU']
+  }
+];
+
 interface Specs {
   gpu: string;
   cpu: string;
@@ -15,6 +91,7 @@ export default function App() {
   const [customSpecs, setCustomSpecs] = useState<Specs | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState<Specs | null>(null);
+  const [inlineEditingField, setInlineEditingField] = useState<'gpu' | 'ram' | 'cpu' | 'os' | null>(null);
   
   const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -51,6 +128,10 @@ export default function App() {
             cleanGpu = cleanGpu.replace(/\s*\(\s*0x[0-9a-fA-F]+\s*\)?/i, '');
             // 4. Final cleanup
             gpu = cleanGpu.replace(/[,)]$/, '').trim();
+            // 5. Reformat to put number first (e.g., "NVIDIA GeForce RTX 4060" -> "4060 RTX")
+            gpu = gpu.replace(/(?:NVIDIA\s+GeForce\s+|NVIDIA\s+)?(RTX|GTX)\s+(\d{4}\s*(?:Ti|Super|Max-Q|Laptop GPU|Laptop)?)/i, '$2 $1');
+            gpu = gpu.replace(/(?:AMD\s+Radeon\s+|AMD\s+)?(RX)\s+(\d{4}\s*(?:XTX|XT|GRE)?)/i, '$2 $1');
+            gpu = gpu.replace(/Laptop GPU/i, 'Laptop');
           }
         }
       } catch (e) {
@@ -60,7 +141,7 @@ export default function App() {
       // 2. CPU Cores Detection
       let cpu = 'Unknown';
       if ('hardwareConcurrency' in navigator) {
-        cpu = `${navigator.hardwareConcurrency} Threads`;
+        cpu = `${navigator.hardwareConcurrency} Cores`;
       } else {
         cpu = 'Not available';
       }
@@ -160,13 +241,13 @@ export default function App() {
               animate={{ opacity: 1, scale: 1 }}
               className="flex flex-col md:flex-row flex-wrap justify-center items-center gap-x-6 gap-y-6 py-8 border-y border-neutral-200 dark:border-neutral-800/60"
             >
-              <EditSpecItem icon={<Monitor />} label="GPU" value={editForm.gpu} onChange={(v) => setEditForm({...editForm, gpu: v})} />
+              <EditSpecItem icon={<Monitor />} label="GPU" value={editForm.gpu} onChange={(v) => setEditForm({...editForm, gpu: v})} options={GPU_OPTIONS} />
               <Divider />
-              <EditSpecItem icon={<MemoryStick />} label="RAM" value={editForm.ram} onChange={(v) => setEditForm({...editForm, ram: v})} />
+              <EditSpecItem icon={<MemoryStick />} label="RAM" value={editForm.ram} onChange={(v) => setEditForm({...editForm, ram: v})} options={RAM_OPTIONS} />
               <Divider />
-              <EditSpecItem icon={<Cpu />} label="CORES" value={editForm.cpu} onChange={(v) => setEditForm({...editForm, cpu: v})} />
+              <EditSpecItem icon={<Cpu />} label="CORES" value={editForm.cpu} onChange={(v) => setEditForm({...editForm, cpu: v})} options={CPU_OPTIONS} />
               <Divider />
-              <EditSpecItem icon={<MonitorSmartphone />} label="OS" value={editForm.os} onChange={(v) => setEditForm({...editForm, os: v})} />
+              <EditSpecItem icon={<MonitorSmartphone />} label="OS" value={editForm.os} onChange={(v) => setEditForm({...editForm, os: v})} options={OS_OPTIONS} />
               
               <div className="flex items-center gap-2 ml-0 md:ml-4 mt-4 md:mt-0">
                 <button 
@@ -190,45 +271,88 @@ export default function App() {
               transition={{ duration: 0.5, delay: 0.2 }}
               className="flex flex-col md:flex-row flex-wrap justify-center items-center gap-x-8 gap-y-8 py-8 border-y border-neutral-200 dark:border-neutral-800/60"
             >
-              <SpecItem icon={<Monitor />} label="GPU" value={displaySpecs!.gpu} />
+              <SpecItem 
+                icon={<Monitor />} 
+                label="GPU" 
+                value={displaySpecs!.gpu} 
+                onEditClick={() => { if (!customSpecs) setCustomSpecs(specs); setInlineEditingField('gpu'); }}
+                isEditing={inlineEditingField === 'gpu'}
+                options={GPU_OPTIONS}
+                onChange={(val) => { setCustomSpecs(prev => ({ ...(prev || specs!), gpu: val })); setInlineEditingField(null); }}
+              />
               <Divider />
-              <SpecItem icon={<MemoryStick />} label="RAM" value={displaySpecs!.ram} hasAsterisk={!customSpecs} onAsteriskClick={() => setIsModalOpen(true)} />
+              <SpecItem 
+                icon={<MemoryStick />} 
+                label="RAM" 
+                value={displaySpecs!.ram} 
+                hasAsterisk={!customSpecs} 
+                onAsteriskClick={() => setIsModalOpen(true)} 
+                onEditClick={() => { if (!customSpecs) setCustomSpecs(specs); setInlineEditingField('ram'); }}
+                isEditing={inlineEditingField === 'ram'}
+                options={RAM_OPTIONS}
+                onChange={(val) => { setCustomSpecs(prev => ({ ...(prev || specs!), ram: val })); setInlineEditingField(null); }}
+              />
               <Divider />
-              <SpecItem icon={<Cpu />} label="CORES" value={displaySpecs!.cpu} hasAsterisk={!customSpecs} onAsteriskClick={() => setIsModalOpen(true)} />
+              <SpecItem 
+                icon={<Cpu />} 
+                label="CORES" 
+                value={displaySpecs!.cpu} 
+                hasAsterisk={!customSpecs} 
+                onAsteriskClick={() => setIsModalOpen(true)} 
+                onEditClick={() => { if (!customSpecs) setCustomSpecs(specs); setInlineEditingField('cpu'); }}
+                isEditing={inlineEditingField === 'cpu'}
+                options={CPU_OPTIONS}
+                onChange={(val) => { setCustomSpecs(prev => ({ ...(prev || specs!), cpu: val })); setInlineEditingField(null); }}
+              />
               <Divider />
-              <SpecItem icon={<MonitorSmartphone />} label="OS" value={displaySpecs!.os} />
+              <SpecItem 
+                icon={<MonitorSmartphone />} 
+                label="OS" 
+                value={displaySpecs!.os} 
+                onEditClick={() => { if (!customSpecs) setCustomSpecs(specs); setInlineEditingField('os'); }}
+                isEditing={inlineEditingField === 'os'}
+                options={OS_OPTIONS}
+                onChange={(val) => { setCustomSpecs(prev => ({ ...(prev || specs!), os: val })); setInlineEditingField(null); }}
+              />
             </motion.div>
           )}
         </div>
+
+        {/* Manual Spec Entry Button (Prominent) */}
+        {!isEditing && specs && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+            className="mt-8 flex flex-col items-center gap-4"
+          >
+            <button 
+              onClick={() => { setEditForm(customSpecs || specs); setIsEditing(true); }} 
+              className="px-6 py-3 bg-white dark:bg-[#111] border border-neutral-200 dark:border-neutral-800 rounded-full shadow-sm hover:shadow-md hover:border-green-500 dark:hover:border-green-500 transition-all flex items-center gap-2 text-sm md:text-base font-medium text-neutral-700 dark:text-neutral-300"
+            >
+              <Edit2 className="w-4 h-4 text-green-600 dark:text-green-500" />
+              {customSpecs ? 'Edit Custom Specs' : 'Detected wrong? Enter specs manually'}
+            </button>
+            {customSpecs && (
+              <button 
+                onClick={() => setCustomSpecs(null)} 
+                className="text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 hover:underline flex items-center gap-1 font-medium text-sm"
+              >
+                <X className="w-4 h-4" /> Reset to Auto-Detected Specs
+              </button>
+            )}
+          </motion.div>
+        )}
 
         {/* Disclaimer & Badges */}
         <motion.div 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.6 }}
-          className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3 text-xs sm:text-sm text-neutral-500 dark:text-neutral-500"
+          className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3 text-xs sm:text-sm text-neutral-500 dark:text-neutral-500"
         >
-          {!isEditing && (
-            <div className="flex flex-col sm:flex-row items-center gap-3">
-              <p>{customSpecs ? 'Displaying custom manual specs.' : 'Estimates based on browser APIs. Actual specs may vary.'}</p>
-              <button 
-                onClick={() => { setEditForm(customSpecs || specs); setIsEditing(true); }} 
-                className="text-green-600 dark:text-green-500 hover:underline flex items-center gap-1 font-medium"
-              >
-                <Edit2 className="w-3.5 h-3.5" /> {customSpecs ? 'Edit Specs' : 'Enter Specs Manually'}
-              </button>
-              {customSpecs && (
-                <button 
-                  onClick={() => setCustomSpecs(null)} 
-                  className="text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 hover:underline flex items-center gap-1 font-medium sm:ml-2"
-                >
-                  <X className="w-3.5 h-3.5" /> Reset to Auto
-                </button>
-              )}
-              <div className="hidden sm:block w-px h-4 bg-neutral-300 dark:bg-neutral-800 mx-1"></div>
-            </div>
-          )}
-          
+          <p>{customSpecs ? 'Displaying custom manual specs.' : 'Estimates based on browser APIs. Actual specs may vary.'}</p>
+          <div className="hidden sm:block w-px h-4 bg-neutral-300 dark:bg-neutral-800 mx-1"></div>
           {specs?.hasWebGPU ? (
             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-100 dark:bg-green-500/10 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-500/20 font-medium">
               <CheckCircle2 className="w-3.5 h-3.5" /> WebGPU
@@ -302,42 +426,127 @@ export default function App() {
   );
 }
 
-function SpecItem({ icon, label, value, hasAsterisk, onAsteriskClick }: { icon: React.ReactNode, label: string, value: string, hasAsterisk?: boolean, onAsteriskClick?: () => void }) {
+function SpecItem({ 
+  icon, label, value, hasAsterisk, onAsteriskClick, onEditClick,
+  isEditing, options, onChange
+}: { 
+  icon: React.ReactNode, label: string, value: string, hasAsterisk?: boolean, onAsteriskClick?: () => void, onEditClick?: () => void,
+  isEditing?: boolean, options?: OptionsType, onChange?: (val: string) => void
+}) {
+  const isGrouped = options && typeof options[0] !== 'string';
+  const hasValue = options ? (
+    isGrouped 
+      ? (options as OptionGroup[]).some(g => g.items.includes(value))
+      : (options as string[]).includes(value)
+  ) : true;
+
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex items-center gap-3 group">
       <div className="flex flex-col items-center justify-center text-neutral-400 dark:text-neutral-500 w-10">
         {React.cloneElement(icon as React.ReactElement, { className: "w-6 h-6 mb-1" })}
         <span className="text-[9px] uppercase tracking-widest font-bold">{label}</span>
       </div>
       <div className="font-mono text-neutral-800 dark:text-neutral-200 text-lg md:text-xl flex items-center gap-2">
-        {value}
-        {hasAsterisk && (
-          <button 
-            onClick={onAsteriskClick}
-            className="text-green-600 dark:text-green-500 hover:text-green-500 dark:hover:text-green-400 transition-colors text-xl leading-none"
-            title="Why is this value inaccurate?"
+        {isEditing && options && onChange ? (
+          <select 
+            value={value} 
+            onChange={(e) => onChange(e.target.value)}
+            onBlur={() => onChange(value)}
+            autoFocus
+            className="font-mono text-neutral-800 dark:text-neutral-200 text-sm md:text-base bg-white dark:bg-[#111] border border-neutral-300 dark:border-neutral-800 rounded-md px-3 py-1.5 outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 w-40 md:w-56 transition-all appearance-none cursor-pointer text-ellipsis overflow-hidden"
+            style={{ backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 0.5rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.5em 1.5em', paddingRight: '2.5rem' }}
           >
-            *
-          </button>
+            {!hasValue && <option value={value}>{value}</option>}
+            {isGrouped ? (
+              (options as OptionGroup[]).map((group, i) => (
+                <optgroup key={i} label={group.group}>
+                  {group.items.map((item, j) => (
+                    <option key={j} value={item}>{item}</option>
+                  ))}
+                </optgroup>
+              ))
+            ) : (
+              (options as string[]).map((item, i) => (
+                <option key={i} value={item}>{item}</option>
+              ))
+            )}
+          </select>
+        ) : (
+          <>
+            {value}
+            {hasAsterisk && (
+              <button 
+                onClick={onAsteriskClick}
+                className="text-green-600 dark:text-green-500 hover:text-green-500 dark:hover:text-green-400 transition-colors text-xl leading-none"
+                title="Why is this value inaccurate?"
+              >
+                *
+              </button>
+            )}
+            {onEditClick && (
+              <button
+                onClick={onEditClick}
+                className="text-neutral-300 dark:text-neutral-700 hover:text-green-600 dark:hover:text-green-500 transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100 ml-1"
+                title="Edit this spec manually"
+              >
+                <Edit2 className="w-4 h-4" />
+              </button>
+            )}
+          </>
         )}
       </div>
     </div>
   );
 }
 
-function EditSpecItem({ icon, label, value, onChange }: { icon: React.ReactNode, label: string, value: string, onChange: (val: string) => void }) {
+type OptionGroup = { group: string; items: string[] };
+type OptionsType = string[] | OptionGroup[];
+
+function EditSpecItem({ icon, label, value, onChange, options }: { icon: React.ReactNode, label: string, value: string, onChange: (val: string) => void, options?: OptionsType }) {
+  const isGrouped = options && typeof options[0] !== 'string';
+
+  const hasValue = options ? (
+    isGrouped 
+      ? (options as OptionGroup[]).some(g => g.items.includes(value))
+      : (options as string[]).includes(value)
+  ) : true;
+
   return (
     <div className="flex items-center gap-3">
       <div className="flex flex-col items-center justify-center text-neutral-400 dark:text-neutral-500 w-10">
         {React.cloneElement(icon as React.ReactElement, { className: "w-6 h-6 mb-1" })}
         <span className="text-[9px] uppercase tracking-widest font-bold">{label}</span>
       </div>
-      <input 
-        type="text" 
-        value={value} 
-        onChange={(e) => onChange(e.target.value)}
-        className="font-mono text-neutral-800 dark:text-neutral-200 text-sm md:text-base bg-white dark:bg-[#111] border border-neutral-300 dark:border-neutral-800 rounded-md px-3 py-1.5 outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 w-32 md:w-40 transition-all"
-      />
+      {options ? (
+        <select 
+          value={value} 
+          onChange={(e) => onChange(e.target.value)}
+          className="font-mono text-neutral-800 dark:text-neutral-200 text-sm md:text-base bg-white dark:bg-[#111] border border-neutral-300 dark:border-neutral-800 rounded-md px-3 py-1.5 outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 w-40 md:w-56 transition-all appearance-none cursor-pointer text-ellipsis overflow-hidden"
+          style={{ backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 0.5rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.5em 1.5em', paddingRight: '2.5rem' }}
+        >
+          {!hasValue && <option value={value}>{value}</option>}
+          {isGrouped ? (
+            (options as OptionGroup[]).map((group, i) => (
+              <optgroup key={i} label={group.group}>
+                {group.items.map((item, j) => (
+                  <option key={j} value={item}>{item}</option>
+                ))}
+              </optgroup>
+            ))
+          ) : (
+            (options as string[]).map((item, i) => (
+              <option key={i} value={item}>{item}</option>
+            ))
+          )}
+        </select>
+      ) : (
+        <input 
+          type="text" 
+          value={value} 
+          onChange={(e) => onChange(e.target.value)}
+          className="font-mono text-neutral-800 dark:text-neutral-200 text-sm md:text-base bg-white dark:bg-[#111] border border-neutral-300 dark:border-neutral-800 rounded-md px-3 py-1.5 outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 w-40 md:w-56 transition-all text-ellipsis overflow-hidden"
+        />
+      )}
     </div>
   );
 }
