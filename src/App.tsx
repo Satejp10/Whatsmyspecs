@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Monitor, Cpu, MemoryStick, MonitorSmartphone, Sun, Moon, Info, X, ExternalLink, CheckCircle2, AlertCircle, Edit2, Save } from 'lucide-react';
+import { Monitor, Cpu, MemoryStick, MonitorSmartphone, Sun, Moon, Info, X, ExternalLink, CheckCircle2, AlertCircle, Edit2, Save, Database } from 'lucide-react';
 
 const RAM_OPTIONS = ['4 GB', '8 GB', '12 GB', '16 GB', '24 GB', '32 GB', '64 GB', '128 GB'];
+const VRAM_OPTIONS = ['2 GB', '4 GB', '6 GB', '8 GB', '10 GB', '12 GB', '16 GB', '20 GB', '24 GB', '32 GB', 'Shared'];
 const CPU_OPTIONS = [
   {
     group: 'Core Count',
@@ -80,6 +81,7 @@ const GPU_OPTIONS = [
 
 interface Specs {
   gpu: string;
+  vram: string;
   cpu: string;
   ram: string;
   os: string;
@@ -91,7 +93,7 @@ export default function App() {
   const [customSpecs, setCustomSpecs] = useState<Specs | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState<Specs | null>(null);
-  const [inlineEditingField, setInlineEditingField] = useState<'gpu' | 'ram' | 'cpu' | 'os' | null>(null);
+  const [inlineEditingField, setInlineEditingField] = useState<'gpu' | 'vram' | 'ram' | 'cpu' | 'os' | null>(null);
   
   const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -183,7 +185,20 @@ export default function App() {
       // 5. WebGPU Detection
       const hasWebGPU = 'gpu' in navigator;
 
-      setSpecs({ gpu, cpu, ram, os, hasWebGPU });
+      // 6. Guess VRAM based on GPU name
+      let vram = 'Unknown';
+      if (/5090/.test(gpu)) vram = '32 GB';
+      else if (/4090|3090|7900 XTX/.test(gpu)) vram = '24 GB';
+      else if (/7900 XT/.test(gpu)) vram = '20 GB';
+      else if (/5080|4080|4060 Ti|7900 GRE|7800 XT|7600 XT|6900 XT|6800/.test(gpu)) vram = '16 GB';
+      else if (/5070|4070|3080 Ti|3060|7700 XT|6750 XT|6700 XT/.test(gpu)) vram = '12 GB';
+      else if (/3080/.test(gpu)) vram = '10 GB';
+      else if (/4060|3070|3060 Ti|3050|2080|2070|2060 Super|7600|6650 XT|6600/.test(gpu)) vram = '8 GB';
+      else if (/2060|1660/.test(gpu)) vram = '6 GB';
+      else if (/1650|6500/.test(gpu)) vram = '4 GB';
+      else if (/Apple|Intel|Integrated|UHD|Iris/.test(gpu)) vram = 'Shared';
+
+      setSpecs({ gpu, vram, cpu, ram, os, hasWebGPU });
     };
 
     const timer = setTimeout(() => {
@@ -243,6 +258,8 @@ export default function App() {
             >
               <EditSpecItem icon={<Monitor />} label="GPU" value={editForm.gpu} onChange={(v) => setEditForm({...editForm, gpu: v})} options={GPU_OPTIONS} />
               <Divider />
+              <EditSpecItem icon={<Database />} label="VRAM" value={editForm.vram} onChange={(v) => setEditForm({...editForm, vram: v})} options={VRAM_OPTIONS} />
+              <Divider />
               <EditSpecItem icon={<MemoryStick />} label="RAM" value={editForm.ram} onChange={(v) => setEditForm({...editForm, ram: v})} options={RAM_OPTIONS} />
               <Divider />
               <EditSpecItem icon={<Cpu />} label="CORES" value={editForm.cpu} onChange={(v) => setEditForm({...editForm, cpu: v})} options={CPU_OPTIONS} />
@@ -279,6 +296,18 @@ export default function App() {
                 isEditing={inlineEditingField === 'gpu'}
                 options={GPU_OPTIONS}
                 onChange={(val) => { setCustomSpecs(prev => ({ ...(prev || specs!), gpu: val })); setInlineEditingField(null); }}
+              />
+              <Divider />
+              <SpecItem 
+                icon={<Database />} 
+                label="VRAM" 
+                value={displaySpecs!.vram} 
+                hasAsterisk={!customSpecs} 
+                onAsteriskClick={() => setIsModalOpen(true)} 
+                onEditClick={() => { if (!customSpecs) setCustomSpecs(specs); setInlineEditingField('vram'); }}
+                isEditing={inlineEditingField === 'vram'}
+                options={VRAM_OPTIONS}
+                onChange={(val) => { setCustomSpecs(prev => ({ ...(prev || specs!), vram: val })); setInlineEditingField(null); }}
               />
               <Divider />
               <SpecItem 
